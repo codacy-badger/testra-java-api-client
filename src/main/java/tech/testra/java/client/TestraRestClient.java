@@ -1,14 +1,12 @@
-package tech.testra.java.api.client;
+package tech.testra.java.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tech.testra.java.api.client.api.*;
-import tech.testra.java.api.client.model.*;
-import tech.testra.java.api.client.utils.HostNameUtil;
-import tech.testra.java.api.client.utils.PropertyHelper;
 import tech.testra.java.client.api.*;
 import tech.testra.java.client.model.*;
-import tech.testra.java.api.client.model.TestResultRequest.StatusEnum;
+import tech.testra.java.client.model.TestResultRequest.StatusEnum;
+import tech.testra.java.client.utils.HostNameUtil;
+import tech.testra.java.client.utils.PropertyHelper;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -17,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static tech.testra.java.api.client.utils.PropertyHelper.prop;
 
 
 public final class TestraRestClient {

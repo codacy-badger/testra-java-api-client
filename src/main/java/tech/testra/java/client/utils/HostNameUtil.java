@@ -1,4 +1,4 @@
-package tech.testra.java.api.client.utils;
+package tech.testra.java.client.utils;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
