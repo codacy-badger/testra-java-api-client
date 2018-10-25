@@ -1,0 +1,207 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath('io.swagger:swagger-codegen:2.2.3')
+    }
+}
+
+plugins {
+    id 'idea'
+    id 'project-report'
+    id 'java'
+    id 'maven-publish'
+    id "com.jfrog.bintray" version "1.8.4"
+    id "com.jfrog.artifactory" version "4.8.1"
+}
+
+repositories {
+        mavenLocal()
+        maven { url 'https://projectlombok.org/edge-releases' }
+        jcenter()
+    }
+
+ext {
+    jackson_version = '2.4.2'
+    jersey_version = '1.18'
+    jodatime_version = '2.3'
+    junit_version = '4.8.1'
+}
+
+group 'tech.testra'
+version '0.18'
+
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+
+import io.swagger.codegen.config.CodegenConfigurator
+import io.swagger.codegen.DefaultGenerator
+
+def swaggerInput = "swagger.yaml"
+def swaggerOutputDir = file('build/swagger')
+task generateApi {
+    inputs.file(swaggerInput)
+    outputs.dir(swaggerOutputDir)
+    doLast {
+        def config = new CodegenConfigurator()
+        config.setInputSpec(swaggerInput)
+        config.setOutputDir(swaggerOutputDir.path)
+        config.setLang('java')
+        config.setAdditionalProperties([
+                'invokerPackage': 'tech.testra.java.client',
+                'modelPackage'  : 'tech.testra.java.client.model',
+                'apiPackage'    : 'tech.testra.java.client.api',
+                'dateLibrary'   : 'java8'
+        ])
+        config.setImportMappings([
+                'Dog': 'tech.testra.jvm.client.model.Dog'
+        ])
+        new DefaultGenerator().opts(config.toClientOptInput()).generate()
+    }
+}
+
+clean.doFirst {
+    delete(swaggerOutputDir)
+}
+
+configurations {
+    swagger
+}
+
+sourceSets {
+    swagger {
+        compileClasspath = configurations.swaggerCompile
+        java {
+            srcDir file("$buildDir/swagger/src/main/java")
+        }
+    }
+    main {
+        compileClasspath += swagger.output
+        runtimeClasspath += swagger.output
+    }
+    test {
+        compileClasspath += swagger.output
+        runtimeClasspath += swagger.output
+    }
+}
+
+compileSwaggerJava.dependsOn generateApi
+classes.dependsOn swaggerClasses
+compileJava.dependsOn compileSwaggerJava
+
+dependencies {
+    // swaggerCompile "org.springframework.boot:spring-boot-starter-web:$spring_boot_version"
+    swaggerCompile 'io.swagger:swagger-annotations:1.5.16'
+    swaggerCompile 'com.squareup.okhttp:okhttp:2.7.5'
+    swaggerCompile 'com.squareup.okhttp:logging-interceptor:2.7.5'
+    swaggerCompile 'com.google.code.gson:gson:2.8.1'
+
+    compile sourceSets.swagger.output
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+    compile group: 'ch.qos.logback', name:'logback-classic', version: '1.1.2'
+    compile group: 'ch.qos.logback', name:'logback-core', version: '1.1.2'
+    testCompile "junit:junit:$junit_version"
+
+    runtime 'com.squareup.okhttp:okhttp:2.7.5'
+    runtime 'com.squareup.okhttp:logging-interceptor:2.7.5'
+    runtime 'com.google.code.gson:gson:2.8.1'
+}
+
+jar {
+    from "$buildDir/classes/java/swagger"
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+javadoc.failOnError = false
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+publishing {
+    publications {
+        mavenPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+            pom {
+                url = 'https://github.com/testra-tech/testra-java-api-client'
+                licenses {
+                    license {
+                        name = 'GNU GENERAL PUBLIC LICENSE, Version 3.0'
+                        url = 'https://www.gnu.org/licenses/gpl.txt'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'jhorsman'
+                        name = 'Jonathan Horsman'
+                    }
+                    developer {
+                        id = 'sudokar'
+                        name = 'sudokar'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/testra-tech/testra-java-api-client'
+                }
+            }
+        }
+    }
+}
+
+artifactory {
+    contextUrl = 'http://oss.jfrog.org'
+    publish {
+        repository {
+            repoKey = 'oss-snapshot-local'
+            username = System.getProperty('bintray.user')
+            password = System.getProperty('bintray.key')
+        }
+        defaults {
+            publications('mavenPublication')
+            publishArtifacts = true
+            publishPom = true
+        }
+    }
+    resolve {
+        repoKey = 'jcenter'
+    }
+    clientConfig.info.setBuildNumber(System.getProperty('build.number'))
+}
+
+bintray {
+    user = System.getProperty('bintray.user')
+    key = System.getProperty('bintray.key')
+    publications = ['mavenPublication']
+    override = true
+    dryRun = false
+    publish = true
+    pkg {
+        repo = 'testra'
+        name = "$project.name"
+        publicDownloadNumbers = true
+        desc = 'Java api client for Testra'
+        licenses = ['GPL-3.0']
+        vcsUrl = 'https://github.com/testra-tech/testra-java-api-client'
+        version {
+            name = "$project.version"
+            desc = "$project.version"
+            released  = new Date()
+        }
+    }
+}
