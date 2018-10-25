@@ -23,6 +23,7 @@ jobs:
   include:
   - stage: compile
     script:
+    - sh get-swagger-file.sh
     - "./gradlew compileJava compileTestJava"
   - stage: static_code_analysis
     script:
