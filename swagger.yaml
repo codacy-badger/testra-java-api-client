@@ -1,0 +1,2087 @@
+swagger: '2.0'
+info:
+  version: '1.0-SNAPSHOT'
+  title: "Testra API"
+  description: API documentation for Testra
+  license:
+    name: GNU GPLv3
+    url: https://github.com/testra-tech/testra-api/blob/master/LICENSE
+host: testra-api.herokuapp.com
+basePath: /api/v1/
+schemes:
+- http
+- https
+consumes:
+- application/json
+produces:
+- application/json
+tags:
+- name: "project"
+  description: "Everything about Projects"
+- name: "scenario"
+  description: "Everything about Test Scenarios"
+- name: "testcase"
+  description: "Everything about Test Cases"
+- name: "execution"
+  description: "Everything about Executions"
+- name: "result"
+  description: "Everything about Test Results"
+- name: "simulation"
+  description: "Everything about Simulations"
+- name: "security-scan"
+  description: "Everything about Security scans"
+
+paths:
+  /projects:
+    get:
+      tags:
+      - "project"
+      summary: List All Projects
+      description: |
+        Returns list of all projects available
+      operationId: getProjects
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Project'
+          examples:
+            application/json:
+            - id: 5ae7ea5fb969e16b0e4cfb41
+              name: Test Project
+
+    post:
+      tags:
+      - "project"
+      summary: Create a New Project
+      description: >-
+        Adds a new project into Testra app. It takes a JSON
+        object containing a name that was not used before.
+      operationId: createProject
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ProjectRequest'
+      responses:
+        201:
+          description: 'Successful creation of Project'
+          schema:
+            $ref: '#/definitions/Project'
+          examples:
+            application/json:
+            - id: 5ae7ea5fb969e16b0e4cfb41
+              name: Test Project
+        401:
+          description: 'Project already exists'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ProjectAlreadyExistsException
+              message: Given project name already exists
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /projects/{id}:
+    get:
+      tags:
+      - "project"
+      summary: Get project by id or name
+      description: Returns single project info for the given id or name
+      operationId: getProject
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Project Id or Name
+      responses:
+        200:
+          description: 'Successful update of given Project'
+          schema:
+            $ref: '#/definitions/Project'
+          examples:
+            application/json:
+            - id: 5ae7ea5fb969e16b0e4cfb41
+              name: Test Project
+        404:
+          description: 'Project not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ProjectNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    put:
+      tags:
+      - "project"
+      summary: Update project info
+      description: |
+        Updates exiting project using project id
+      operationId: updateProject
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ProjectRequest'
+      responses:
+        200:
+          description: 'Successful update of given Project'
+          schema:
+            $ref: '#/definitions/Project'
+          examples:
+            application/json:
+            - id: 5ae7ea5fb969e16b0e4cfb41
+              name: Test Project
+        404:
+          description: 'Project not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ProjectNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+    delete:
+      tags:
+      - "project"
+      summary: Deletes project info
+      operationId: deleteProject
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      responses:
+        200:
+          description: 'Successful deletion of given Project'
+          schema:
+            $ref: '#/definitions/Project'
+          examples:
+            application/json:
+            - id: 5ae7ea5fb969e16b0e4cfb41
+              name: Test Project
+        404:
+          description: 'Project not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ProjectNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /projects/{id}/counters:
+    get:
+      tags:
+      - "project"
+      summary: Get couters for project children
+      description: Returns counts of Executions, Results, Scenarios, Testcases, SImulations and Vulnerability alerts
+      operationId: getProjectCounters
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      responses:
+        200:
+          description: 'Success return of counts'
+          schema:
+            $ref: '#/definitions/ProjectCounter'
+          examples:
+            application/json:
+            - testExecutionsCount: 10
+              testResultsCount: 10
+              testScenariosCount: 10
+              testCasesCount: 10
+              simulationsCount: 10
+              vulnerabilityAlertsCount: 10
+        404:
+          description: 'Project not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ProjectNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /projects/top:
+    get:
+      tags:
+      - "project"
+      summary: Top Projects
+      description: |
+        Returns list of top projects sorted by no of executions
+      operationId: topProjects
+      parameters:
+      - name: size
+        in: query
+        type: integer
+        required: true
+        description: No of projects to retrieve
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProjectExecutionCounter'
+          examples:
+            application/json:
+            - projectName: Test Project
+              noOfExecutions: 10
+
+  /projects/{projectId}/scenarios:
+    get:
+      tags:
+      - "scenario"
+      summary: List all scenarios
+      description: |
+        Returns list of all scenarios within given project
+      operationId: getScenarios
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: featureId
+        in: query
+        required: false
+        type: string
+        description: Feature Id
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Scenario'
+        404:
+          description: 'Project not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ProjectNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+    post:
+      tags:
+      - "scenario"
+      summary: Create a New Scenario
+      description: >-
+        Adds a new scenario into Testra app. It takes a JSON
+        object containing a name that was not used before.
+      operationId: createScenario
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Scenario Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ScenarioRequest'
+      responses:
+        201:
+          description: 'Successful creation of Scenario'
+          schema:
+            $ref: '#/definitions/Scenario'
+        404:
+          description: 'Project not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ProjectNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /projects/{projectId}/scenarios/{id}:
+    get:
+      tags:
+      - "scenario"
+      summary: Get scenario by id
+      description: Returns single scenario info for the given id
+      operationId: getScenario
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Scenario Id
+      responses:
+        200:
+          description: 'Scenario Info'
+          schema:
+            $ref: '#/definitions/Scenario'
+        404:
+          description: 'Scenario/Project not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ScenarioNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    put:
+      tags:
+      - "scenario"
+      summary: Update scenario info
+      description: |
+        Updates exiting scenario using scenario id
+      operationId: updateScenario
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Scenario Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ScenarioRequest'
+      responses:
+        200:
+          description: 'Successful update of given Scenario'
+          schema:
+            $ref: '#/definitions/Scenario'
+        404:
+          description: 'Scenario not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ScenarioNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    delete:
+      tags:
+      - "scenario"
+      summary: Deletes scenario info
+      operationId: deleteScenario
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Scenario Id
+      responses:
+        200:
+          description: 'Successful deletion of given Scenario'
+          schema:
+            $ref: '#/definitions/Scenario'
+        404:
+          description: 'Scenario not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ScenarioNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /projects/{projectId}/testcases:
+    get:
+      tags:
+      - "testcase"
+      summary: List all testcases
+      description: |
+        Returns list of all testcases within given project
+      operationId: getTestcases
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: namespaceId
+        in: query
+        required: false
+        type: string
+        description: Namespace Id
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Testcase'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+    post:
+      tags:
+      - "testcase"
+      summary: Create a New Testcase
+      description: >-
+        Adds a new testcase into Testra app. It takes a JSON
+        object containing a name that was not used before.
+      operationId: createTestcase
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Testcase Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/TestcaseRequest'
+      responses:
+        201:
+          description: 'Successful creation of Testcase'
+          schema:
+            $ref: '#/definitions/Testcase'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /projects/{projectId}/testcases/{id}:
+    get:
+      tags:
+      - "testcase"
+      summary: Get testcase by id
+      description: Returns single testcase info for the given id
+      operationId: getTestcase
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Testcase Id
+      responses:
+        200:
+          description: 'Successful response'
+          schema:
+            $ref: '#/definitions/Testcase'
+        404:
+          description: 'Testcase not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: TestCaseNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    put:
+      tags:
+      - "testcase"
+      summary: Update testcase info
+      description: |
+        Updates exiting testcase using testcase id
+      operationId: updateTestcase
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Testcase Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/TestcaseRequest'
+      responses:
+        200:
+          description: 'Successful update of given Testcase'
+          schema:
+            $ref: '#/definitions/Testcase'
+        404:
+          description: 'Testcase not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: TestCaseNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    delete:
+      tags:
+      - "testcase"
+      summary: Deletes testcase info
+      operationId: deleteTestcase
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Testcase Id
+      responses:
+        200:
+          description: 'Successful deletion of given Testcase'
+          schema:
+            $ref: '#/definitions/Testcase'
+        404:
+          description: 'Testcase not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: TestCaseNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /projects/{projectId}/executions:
+    get:
+      tags:
+      - "execution"
+      summary: List all executions
+      description: |
+        Returns list of all executions within given project
+      operationId: getExecutions
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Execution'
+
+    post:
+      tags:
+      - "execution"
+      summary: Create a New Execution
+      description: >-
+        Adds a new execution into Testra app. It takes a JSON
+        object containing a name that was not used before.
+      operationId: createExecution
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ExecutionRequest'
+      responses:
+        201:
+          description: 'Successful creation of Execution'
+          schema:
+            $ref: '#/definitions/Execution'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /projects/{projectId}/executions/{id}:
+    get:
+      tags:
+      - "execution"
+      summary: Get execution by id
+      description: Returns single execution info for the given id
+      operationId: getExecution
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      responses:
+        200:
+          description: 'Successful response of given Execution'
+          schema:
+            $ref: '#/definitions/Execution'
+        404:
+          description: 'Execution not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ExecutionNotFoundException
+              message: Invalid execution id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    put:
+      tags:
+      - "execution"
+      summary: Update execution info
+      description: |
+        Updates exiting execution using execution id
+      operationId: updateExecution
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ExecutionRequest'
+      responses:
+        200:
+          description: 'Successful update of given Execution'
+          schema:
+            $ref: '#/definitions/Execution'
+        404:
+          description: 'Execution not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ExecutionNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    delete:
+      tags:
+      - "execution"
+      summary: Deletes execution info
+      operationId: deleteExecution
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      responses:
+        200:
+          description: 'Successful deletion of given Execution'
+          schema:
+            $ref: '#/definitions/Execution'
+        404:
+          description: 'Execution not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ExecutionNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /projects/{projectId}/executions/{id}/result-stats:
+    get:
+      tags:
+      - "execution"
+      summary: Get test execution's result stats
+      description: Returns passed, failed and other results count
+      operationId: getExecutionResultStats
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      responses:
+        200:
+          description: 'Successful response of given Execution'
+          schema:
+            $ref: '#/definitions/TestExecutionStats'
+        404:
+          description: 'Execution not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: ExecutionNotFoundException
+              message: Invalid execution id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /executions/recents:
+    get:
+      tags:
+      - "execution"
+      summary: Recent executions
+      description: |
+        Returns list of recent executions sorted by start time
+      operationId: recentExecutions
+      parameters:
+      - name: size
+        in: query
+        required: true
+        type: integer
+        description: No of executions to return
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Execution'
+
+  /projects/{projectId}/executions/{executionId}/results:
+    get:
+      tags:
+      - "result"
+      summary: List of all results
+      description: |
+        Returns list of all results within given project and execution
+      operationId: getResults
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: status
+        in: query
+        required: false
+        type: string
+        description: Filter test results by the given result status
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/EnrichedTestResult'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    post:
+      tags:
+      - "result"
+      summary: Create a New Result
+      description: >-
+        Adds a new result into Testra app. It takes a JSON
+        object containing a name that was not used before.
+      operationId: createResult
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Result Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/TestResultRequest'
+      responses:
+        201:
+          description: 'Successful creation of Result'
+          schema:
+            $ref: '#/definitions/TestResult'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /projects/{projectId}/executions/{executionId}/results/{id}:
+    get:
+      tags:
+      - "result"
+      summary: Get result by id
+      description: Returns single result info for the given id
+      operationId: getResult
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Result Id
+      responses:
+        200:
+          description: 'Successful update of given Result'
+          schema:
+            $ref: '#/definitions/TestResult'
+        404:
+          description: 'Test result not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: TestResultNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+    put:
+      tags:
+      - "result"
+      summary: Update result info
+      description: |
+        Updates exiting result using result id
+      operationId: updateResult
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Result Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/TestResultRequest'
+      responses:
+        200:
+          description: 'Successful update of given Result'
+          schema:
+            $ref: '#/definitions/TestResult'
+        404:
+          description: 'Test result not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: TestResultNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+    delete:
+      tags:
+      - "result"
+      summary: Deletes result info
+      operationId: deleteResult
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Result Id
+      responses:
+        200:
+          description: 'Successful deletion of given Result'
+          schema:
+            $ref: '#/definitions/TestResult'
+        404:
+          description: 'Test result not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: TestResultNotFoundException
+              message: Invalid project id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /projects/{projectId}/executions/{executionId}/groups:
+    get:
+      tags:
+      - "test-group"
+      summary: List all test groups under execution
+      description: |
+        Returns list of all test groups (features or namespaces) within given project and execution
+      operationId: getTestGroupsInExecution
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/TestGroup'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /projects/{projectId}/test-groups:
+    get:
+      tags:
+      - "test-group"
+      summary: List all test groups
+      description: |
+        Returns list of all test groups within given project
+      operationId: getTestGroups
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: type
+        in: query
+        required: false
+        type: string
+        description: Filter results by group type. Group type can be either FEATURE or NAMESPACE
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/TestGroup'
+              
+  /projects/{projectId}/executions/{executionId}/simulations:
+    get:
+      tags:
+      - "simulation"
+      summary: List of all simulations
+      description: |
+        Returns list of all simulations within given project and execution
+      operationId: getSimulations
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Simulation'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    post:
+      tags:
+      - "simulation"
+      summary: Create a New Simulation
+      description: >-
+        Adds a new simulation into Testra app. It takes a JSON
+        object containing a name that was not used before.
+      operationId: createSimulation
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Result Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/SimulationRequest'
+      responses:
+        201:
+          description: 'Successful creation of Simulation'
+          schema:
+            $ref: '#/definitions/Simulation'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+            
+  /projects/{projectId}/executions/{executionId}/simulation/{id}:
+    delete:
+      tags:
+      - "simulation"
+      summary: Deletes simulation info
+      operationId: deleteSimulation
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: Simulation Id
+      responses:
+        200:
+          description: 'Successful deletion of given simulation'
+          schema:
+            $ref: '#/definitions/Simulation'
+        404:
+          description: 'Simulation not found'
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            application/json:
+            - error: SimulationNotFoundException
+              message: Invalid simulation id
+              timestamp: 15678902394
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /projects/{projectId}/executions/{executionId}/scan-results:
+    get:
+      tags:
+      - "security-scan"
+      summary: Get security scan results
+      description: |
+        Returns security scan result for the given project and execution
+      operationId: getSecurityScanResult
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ScanResult'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+    post:
+      tags:
+      - "security-scan"
+      summary: Add a new security scan result
+      description: >-
+        Adds a new security scan result into Testra app
+      operationId: createSecurityScanResult
+      parameters:
+      - name: projectId
+        in: path
+        required: true
+        type: string
+        description: Project Id
+      - name: executionId
+        in: path
+        required: true
+        type: string
+        description: Execution Id
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ScanResultRequest'
+      responses:
+        201:
+          description: 'Successful creation of Scan Result'
+          schema:
+            $ref: '#/definitions/ScanResult'
+        default:
+          description: Any other errors
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  
+  /counters:
+    get:
+      tags:
+      - "counter"
+      summary: Counters 
+      description: |
+        Returns counters for Projects, Test executions, Test scenarions, Test cases and Test results
+      operationId: getCounters
+      responses:
+        200:
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/Counter'
+          examples:
+            application/json:
+            - projectsSize: 10
+              testScenariosSize: 10
+              testCasesSize: 10
+              testExecutionsSize: 10
+              testResultsSize: 10
+
+definitions:
+  Project:
+    title: Project
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      creationDate:
+        type: integer
+        format: int64
+    required:
+      - id
+      - name
+
+  ProjectRequest:
+    title: Project Request
+    type: object
+    properties:
+      name:
+        type: string
+      projectType:
+        type: string
+        enum: [TEST, SIMULATION, SECURITY]
+      description:
+        type: string
+    required:
+      - name
+      - description
+    example:
+      name: Test Project
+
+  Scenario:
+    title: Scenario
+    type: object
+    properties:
+      id:
+        type: string
+      projectId:
+        type: string
+      featureId:
+        type: string
+      featureDescription:
+        type: string
+      manual:
+        type: boolean
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      before:
+        type: array
+        items:
+          $ref: '#/definitions/TestStep'
+      after:
+        type: array
+        items:
+          $ref: '#/definitions/TestStep'
+      backgroundSteps:
+        type: array
+        items:
+          $ref: '#/definitions/TestStep'
+      steps:
+        type: array
+        items:
+          $ref: '#/definitions/TestStep'
+    required:
+      - id
+      - projectId
+      - name
+      - featureId
+      - featureDescription
+      - tags
+      - before
+      - after
+      - backgroundSteps
+      - steps
+
+  ScenarioRequest:
+    title: Scenario Request
+    type: object
+    properties:
+      name:
+        type: string
+      featureName:
+        type: string
+      featureDescription:
+        type: string
+      manual:
+        type: boolean
+      tags:
+        type: array
+        items:
+          type: string
+      before:
+        type: array
+        items:
+          $ref: '#/definitions/TestStep'
+      after:
+        type: array
+        items:
+          $ref: '#/definitions/TestStep'
+      backgroundSteps:
+        type: array
+        items:
+          $ref: '#/definitions/TestStep'
+      steps:
+        type: array
+        items:
+          $ref: '#/definitions/TestStep'
+    required:
+      - name
+      - featureName
+      - featureDescription
+      - steps
+
+  TestStep:
+    title: TestStep
+    type: object
+    properties:
+      index:
+        type: integer
+      text:
+        type: string
+      dataTableRows:
+        type: array
+        items:
+          $ref: '#/definitions/DataTableRow'
+    required:
+      - index
+      - text
+      
+  DataTableRow:
+    title: DataTableRow
+    type: object
+    properties:
+      index:
+        type: integer
+      cells:
+        type: array
+        items:
+          $ref: '#/definitions/DataTableCell'
+    required:
+      - index
+      - cells
+
+  DataTableCell:
+    title: DataTableCell
+    type: object
+    properties:
+      index:
+        type: integer
+      value:
+        type: string
+    required:
+      - index
+      - value
+
+  Testcase:
+    title: TestCase
+    type: object
+    properties:
+      id:
+        type: string
+      projectId:
+        type: string
+      name:
+        type: string
+      namespaceId:
+        type: string
+      manual:
+        type: boolean
+      tags:
+        type: array
+        items: 
+          type: string
+    required:
+      - id
+      - projectId
+      - name
+      - namespaceId
+
+  TestcaseRequest:
+    title: TestCaseRequest
+    type: object
+    properties:
+      name:
+        type: string
+      namespace:
+        type: string
+      className:
+        type: string
+      manual:
+        type: boolean
+      tags:
+        type: array
+        items: 
+          type: string
+    required:
+      - name
+      - namespace
+      - className
+
+  Execution:
+    title: TestExecution
+    type: object
+    properties:
+      id:
+        type: string
+      projectId:
+        type: string
+      parallel:
+        type: boolean
+      host:
+        type: string
+      startTime:
+        type: integer
+        format: int64
+      endTime:
+        type: integer
+        format: int64
+      environment:
+        type: string
+      branch:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      description:
+        type: string
+      buildRef:
+        type: string
+      groupIds:
+        type: array
+        items:
+          type: string
+    required:
+      - id
+      - projectId
+      - parallel
+      - host
+      - startTime
+      - endTime
+      - environment
+      - branch
+      - tags
+      - groupIds
+
+  ExecutionRequest:
+    title: TestExecutionRequest
+    type: object
+    properties:
+      parallel:
+        type: boolean
+      host:
+        type: string
+      endTime:
+        type: integer
+        format: int64
+      environment:
+        type: string
+      branch:
+        type: string
+      description:
+        type: string
+      buildRef:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+    required:
+      - parallel
+      - host
+      
+  TestExecutionStats:
+    title: TestExecutionStats
+    type: object
+    properties:
+      id:
+        type: string
+      executionId:
+        type: string
+      projectId:
+        type: string
+      passed:
+        type: integer
+        format: int64
+      failed:
+        type: integer
+        format: int64
+      expectedFailures:
+        type: integer
+        format: int64  
+      others:
+        type: integer
+        format: int64
+
+  Result:
+    type: string
+    enum: &RESULT_ENUM
+      - PASSED
+      - FAILED
+      - PENDING
+      - SKIPPED
+      - AMBIGUOUS
+      - UNDEFINED
+      - UNKNOWN
+
+  TestResult:
+    title: TestResult
+    type: object
+    properties:
+      id:
+        type: string
+      targetId:
+        type: string
+      groupId:
+        type: string
+      resultType:
+        type: string
+        enum: [SCENARIO, TEST_CASE]
+      status:
+        type: string
+        enum: *RESULT_ENUM
+      error:
+        type: string
+      durationInMs:
+        type: integer
+        format: int64
+      startTime:
+        type: integer
+        format: int64
+      endTime:
+        type: integer
+        format: int64
+      retryCount:
+        type: integer
+      expectedToFail:
+        type: boolean
+      stepResults:
+        type: array
+        items:
+          $ref: '#/definitions/StepResult'
+      attachments:
+        type: array
+        items:
+          $ref: '#/definitions/Attachment'
+    required:
+      - id
+      - targetId
+      - groupId
+      - resultType
+      - status
+      - durationInMs
+      - startTime
+      - endTime
+      - retryCount
+      
+  EnrichedTestResult:
+    title: TestResult
+    type: object
+    properties:
+      id:
+        type: string
+      targetId:
+        type: string
+      groupId:
+        type: string
+      resultType:
+        type: string
+        enum: [SCENARIO, TEST_CASE]
+      status:
+        type: string
+        enum: *RESULT_ENUM
+      error:
+        type: string
+      durationInMs:
+        type: integer
+        format: int64
+      startTime:
+        type: integer
+        format: int64
+      endTime:
+        type: integer
+        format: int64
+      retryCount:
+        type: integer
+      expectedToFail:
+        type: boolean
+      stepResults:
+        type: array
+        items:
+          $ref: '#/definitions/StepResult'
+      attachments:
+        type: array
+        items:
+          $ref: '#/definitions/Attachment'
+      scenario:
+        $ref: '#/definitions/Scenario'
+      testcase:
+        $ref: '#/definitions/Testcase'
+    required:
+      - id
+      - targetId
+      - groupId
+      - resultType
+      - status
+      - durationInMs
+      - startTime
+      - endTime
+      - retryCount
+
+  TestResultRequest:
+    title: TestResultRequest
+    type: object
+    properties:
+      targetId:
+        type: string
+      groupId:
+        type: string
+      resultType:
+        type: string
+        enum: [SCENARIO, TEST_CASE]
+      status:
+        type: string
+        enum: *RESULT_ENUM
+      error:
+        type: string
+      durationInMs:
+        type: integer
+        format: int64
+      startTime:
+        type: integer
+        format: int64
+      endTime:
+        type: integer
+        format: int64
+      retryCount:
+        type: integer
+      expectedToFail:
+        type: boolean
+      stepResults:
+        type: array
+        items:
+          $ref: '#/definitions/StepResult'
+      attachments:
+        type: array
+        items:
+          $ref: '#/definitions/Attachment'
+    required:
+      - targetId
+      - groupId
+      - resultType
+      - status
+      - durationInMs
+      - startTime
+      - endTime
+      - retryCount
+
+  StepResult:
+    title: Step result
+    type: object
+    properties:
+      index:
+        type: integer
+      status:
+        type: string
+        enum: *RESULT_ENUM
+      durationInMs:
+        type: integer
+        format: int64
+      error:
+        type: string
+    required:
+      - index
+      - status
+      - durationInMs
+
+  Attachment:
+    title: Attachment
+    type: object
+    properties:
+      name:
+        type: string
+      mimeType:
+        type: string
+      base64EncodedByteArray:
+        type: string
+    required:
+      - mimeType
+      - base64EncodedByteArray
+      
+  TestGroup:
+    title: TestGroup
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      projectId:
+        type: string
+      type:
+        type: string
+        enum:
+          - FEATURE
+          - NAMESPACE
+      description:
+        type: string
+      subGroup:
+        type: string
+    required:
+      - id
+      - name
+      - projectId
+      - type
+      - description
+      - subGroup
+      
+  Percentile:
+    title: Percentile
+    type: object
+    properties:
+      n:
+        type: integer
+        format: int32
+      value:
+        type: number
+      
+  SimulationScenario:
+      title: SimulationScenario
+      type: object
+      properties:
+        request:
+          type: string
+        startTime:
+          type: integer
+          format: int64
+        endTime:
+          type: integer
+          format: int64
+        durationInMs:
+          type: integer
+          format: int64
+        count:
+          type: integer
+          format: int64
+        successCount:
+          type: integer
+          format: int64
+        errorCount:
+          type: integer
+          format: int64
+        min:
+          type: number
+        max:
+          type: number
+        percentiles:
+          type: array
+          items:
+            $ref: '#/definitions/Percentile'
+        average:
+          type: number
+        stdDiv:
+          type: number
+        avgRequestPerSec:
+          type: integer
+          format: long
+      
+  SimulationRequest:
+    title: Simulation
+    type: object
+    properties:
+      name:
+        type: string
+      namespace:
+        type: string
+      scenarios:
+        type: array
+        items:
+          $ref: '#/definitions/SimulationScenario'
+    required:
+      - name
+      - namespace
+      - scenarios
+    
+  Simulation:
+    title: Simulation
+    type: object
+    properties:
+      id:
+        type: string
+      projectId:
+        type: string
+      executionId:
+        type: string  
+      name:
+        type: string
+      namespace:
+        type: string
+      scenarios:
+        type: array
+        items:
+          $ref: '#/definitions/SimulationScenario'
+
+  ScanResultRequest:
+    title: ScanResultRequest
+    type: object
+    properties:
+      scanner:
+        type: string
+      scannerVersion:
+        type: string
+      alerts:
+        type: array
+        items:
+          $ref: '#/definitions/VulnerabilityAlert'
+    required:
+    - scanner
+    - scannerVersion
+    - alerts
+
+  ScanResult:
+    title: ScanResult
+    type: object
+    properties:
+      id:
+        type: string
+      projectId:
+        type: string
+      executionId:
+        type: string
+      scanner:
+        type: string
+      scannerVersion:
+        type: string
+      alerts:
+        type: array
+        items:
+          $ref: '#/definitions/VulnerabilityAlert'
+    required:
+    - id
+    - projectId
+    - executionId
+    - scanner
+    - scannerVersion
+    - alerts
+
+  VulnerabilityAlert:
+    title: VulnerabilityAlert
+    type: object
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      riskLevel:
+        type: string
+      solution:
+        type: string
+      otherInfo:
+        type: string
+      reference:
+        type: string
+      domain:
+        type: string
+      urls:
+        type: array
+        items:
+          $ref: '#/definitions/UrlResource'
+    required:
+    - name
+    - description
+    - riskLevel
+    - solution
+    - otherInfo
+    - reference
+    - domain
+    - urls
+
+  UrlResource:
+    title: UrlResource
+    type: object
+    properties:
+      url:
+        type: string
+      method:
+        type: string
+      params:
+        type: array
+        items:
+          type: string
+    required:
+    - url
+    - method
+    - params
+
+  Counter:
+    title: Counter
+    type: object
+    properties:
+      projectsCount:
+        type: integer
+        format: int64
+      testScenariosCount:
+        type: integer
+        format: int64
+      testCasesCount:
+        type: integer
+        format: int64
+      testExecutionsCount:
+        type: integer
+        format: int64
+      testResultsCount:
+        type: integer
+        format: int64
+      simulationsCount:
+        type: integer
+        format: int64
+      vulnerabilityAlertsCount:
+        type: integer
+        format: int64
+    required:
+      - projectsCount
+      - testScenariosCount
+      - testCasesCount
+      - testExecutionsCount
+      - testResultsCount
+      - simulationsCount
+      - vulnerabilityAlertsCount
+      
+  ProjectCounter:
+    title: ProjectCounter
+    type: object
+    properties:
+      testExecutionsCount:
+        type: integer
+        format: int64
+      testResultsCount:
+        type: integer
+        format: int64
+      testScenariosCount:
+        type: integer
+        format: int64
+      testCasesCount:
+        type: integer
+        format: int64
+      simulationsCount:
+        type: integer
+        format: int64
+      vulnerabilityAlertsCount:
+        type: integer
+        format: int64
+    required:
+      - testScenariosCount
+      - testCasesCount
+      - testExecutionsCount
+      - testResultsCount
+      - simulationsCount
+      - vulnerabilityAlertsCount
+      
+  ProjectExecutionCounter:
+    title: ProjectExecutionCounter
+    type: object
+    properties:
+      projectName:
+        type: string
+      noOfExecutions:
+        type: integer
+        format: int64
+    required:
+      - projectName
+      - noOfExecutions
+
+  ErrorResponse:
+    title: ErrorResponse
+    type: object
+    properties:
+      error:
+        type: string
+      msg:
+        type: string
+      timestamp:
+        type: integer
+        format: int64
