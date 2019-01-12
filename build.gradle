@@ -26,7 +26,7 @@ ext {
     jackson_version = '2.4.2'
     jersey_version = '1.18'
     jodatime_version = '2.3'
-    junit_version = '4.8.1'
+    junit_version = '4.12'
 }
 
 group 'tech.testra'
