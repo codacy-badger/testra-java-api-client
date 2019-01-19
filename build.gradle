@@ -3,7 +3,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath('io.swagger:swagger-codegen:2.2.3')
+        classpath('io.swagger:swagger-codegen:2.4.1')
+        classpath('org.projectlombok:lombok:1.18.4')
     }
 }
 
@@ -17,16 +18,22 @@ plugins {
 }
 
 repositories {
-        mavenLocal()
-        maven { url 'https://projectlombok.org/edge-releases' }
-        jcenter()
-    }
+    mavenLocal()
+    jcenter()
+}
 
 ext {
     jackson_version = '2.4.2'
     jersey_version = '1.18'
     jodatime_version = '2.3'
     junit_version = '4.12'
+    lombok_version = '1.18.4'
+    logback_version = '1.2.3'
+    slf4j_version = '1.7.25'
+    okhttp_version = '2.7.5'
+    gson_version = '2.8.5'
+    gson_fire_version = '1.8.3'
+    swagger_anno_version = '1.5.21'
 }
 
 group 'tech.testra'
@@ -34,8 +41,8 @@ version '0.18'
 
 sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 
-import io.swagger.codegen.config.CodegenConfigurator
 import io.swagger.codegen.DefaultGenerator
+import io.swagger.codegen.config.CodegenConfigurator
 
 def swaggerInput = "swagger.yaml"
 def swaggerOutputDir = file('build/swagger')
@@ -90,21 +97,24 @@ classes.dependsOn swaggerClasses
 compileJava.dependsOn compileSwaggerJava
 
 dependencies {
-    // swaggerCompile "org.springframework.boot:spring-boot-starter-web:$spring_boot_version"
-    swaggerCompile 'io.swagger:swagger-annotations:1.5.21'
-    swaggerCompile 'com.squareup.okhttp:okhttp:2.7.5'
-    swaggerCompile 'com.squareup.okhttp:logging-interceptor:2.7.5'
-    swaggerCompile 'com.google.code.gson:gson:2.8.5'
+    swaggerCompile "io.swagger:swagger-annotations:$swagger_anno_version"
+    swaggerCompile "com.squareup.okhttp:okhttp:$okhttp_version"
+    swaggerCompile "com.squareup.okhttp:logging-interceptor:$okhttp_version"
+    swaggerCompile "com.google.code.gson:gson:$gson_version"
+    swaggerCompile "io.gsonfire:gson-fire:$gson_fire_version"
 
     compile sourceSets.swagger.output
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
-    compile group: 'ch.qos.logback', name:'logback-classic', version: '1.2.3'
-    compile group: 'ch.qos.logback', name:'logback-core', version: '1.2.3'
+    compile "org.slf4j:slf4j-api:$slf4j_version"
+    compile "ch.qos.logback:logback-classic:$logback_version"
+    compile "ch.qos.logback:logback-core:$logback_version"
     testCompile "junit:junit:$junit_version"
 
-    runtime 'com.squareup.okhttp:okhttp:2.7.5'
-    runtime 'com.squareup.okhttp:logging-interceptor:2.7.5'
-    runtime 'com.google.code.gson:gson:2.8.1'
+    runtime "com.squareup.okhttp:okhttp:$okhttp_version"
+    runtime "com.squareup.okhttp:logging-interceptor:$okhttp_version"
+    runtime "com.google.code.gson:gson:$gson_version"
+
+    compileOnly "org.projectlombok:lombok:$lombok_version"
+    annotationProcessor "org.projectlombok:lombok:$lombok_version"
 }
 
 jar {
@@ -201,7 +211,7 @@ bintray {
         version {
             name = "$project.version"
             desc = "$project.version"
-            released  = new Date()
+            released = new Date()
         }
     }
 }

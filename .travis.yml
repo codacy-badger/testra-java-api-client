@@ -11,6 +11,9 @@ cache:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
 
+before_script:
+  - bash get-swagger-file.sh
+
 stages:
 - compile
 - static_code_analysis
@@ -23,7 +26,6 @@ jobs:
   include:
   - stage: compile
     script:
-    - bash get-swagger-file.sh
     - "./gradlew compileJava compileTestJava"
   - stage: static_code_analysis
     script:

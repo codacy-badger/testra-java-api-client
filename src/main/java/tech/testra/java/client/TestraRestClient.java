@@ -1,26 +1,37 @@
 package tech.testra.java.client;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import tech.testra.java.client.api.*;
-import tech.testra.java.client.model.*;
-import tech.testra.java.client.model.TestResultRequest.StatusEnum;
-import tech.testra.java.client.utils.HostNameUtil;
-import tech.testra.java.client.utils.PropertyHelper;
+import static tech.testra.java.client.utils.PropertyHelper.prop;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import tech.testra.java.client.api.ExecutionApi;
+import tech.testra.java.client.api.ProjectApi;
+import tech.testra.java.client.api.ResultApi;
+import tech.testra.java.client.api.ScenarioApi;
+import tech.testra.java.client.api.SecurityScanApi;
+import tech.testra.java.client.api.SimulationApi;
+import tech.testra.java.client.api.TestcaseApi;
+import tech.testra.java.client.model.EnrichedTestResult;
+import tech.testra.java.client.model.ExecutionRequest;
+import tech.testra.java.client.model.ScanResultRequest;
+import tech.testra.java.client.model.Scenario;
+import tech.testra.java.client.model.ScenarioRequest;
+import tech.testra.java.client.model.SimulationRequest;
+import tech.testra.java.client.model.TestResult;
+import tech.testra.java.client.model.TestResultRequest;
+import tech.testra.java.client.model.TestResultRequest.StatusEnum;
+import tech.testra.java.client.model.Testcase;
+import tech.testra.java.client.model.TestcaseRequest;
+import tech.testra.java.client.utils.HostNameUtil;
 
-
+@Slf4j
 public final class TestraRestClient {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TestraRestClient.class);
-  private static String projectIDString;
+  private static String projectId;
   private static String executionIDString;
   private static ProjectApi projectApi = new ProjectApi();
   private static ScenarioApi scenarioApi = new ScenarioApi();
@@ -30,67 +41,44 @@ public final class TestraRestClient {
   private static TestcaseApi testcaseApi = new TestcaseApi();
   public static SecurityScanApi securityScanApi = new SecurityScanApi();
   public static String buildRef;
-  public static String executionDescription;
+  public static String execDesc;
 
-    public TestraRestClient() {
-    projectApi.getApiClient().setDebugging(true);
-  }
-
-    public static void setURLs(String url) {
+  public static void setURLs(String url) {
     projectApi.getApiClient().setBasePath(url);
     executionApi.getApiClient().setBasePath(url);
     resultApi.getApiClient().setBasePath(url);
     scenarioApi.getApiClient().setBasePath(url);
-    if (Boolean.parseBoolean(PropertyHelper.prop("testra.debug"))) {
+    testcaseApi.getApiClient().setBasePath(url);
+    simulationtApi.getApiClient().setBasePath(url);
+    securityScanApi.getApiClient().setBasePath(url);
+
+    if (prop("debugTestra") != null) {
       projectApi.getApiClient().setDebugging(true);
       executionApi.getApiClient().setDebugging(true);
       resultApi.getApiClient().setDebugging(true);
       scenarioApi.getApiClient().setDebugging(true);
       testcaseApi.getApiClient().setDebugging(true);
+      simulationtApi.getApiClient().setDebugging(true);
+      securityScanApi.getApiClient().setDebugging(true);
     }
   }
 
-
-    public static String getProjectIDFromList(String projectName) {
-    List<Project> projects = new ArrayList<>();
+  public static String getProjectID(String projectName) {
     try {
-        projects = projectApi.getProjects();
+      projectId = projectApi.getProject(projectName).getId();
+      log.info("Project found in Testra. Its Id: " + projectId);
+      return projectId;
     } catch (ApiException e) {
-      e.printStackTrace();
-    }
-        if (projects.stream().anyMatch(x -> x.getName().equals(projectName))) {
-            projectIDString =
-                    projects
-                            .stream()
-                            .filter(x -> x.getName().equals(projectName))
-                            .collect(Collectors.toList())
-                            .get(0)
-                            .getId();
-      return projectIDString;
-        } else {
-      LOGGER.error("No project found with name " + projectName);
-      throw new IllegalArgumentException("Unknown project");
+      throw new IllegalArgumentException("Project not found in Testra");
     }
   }
 
-  public static String getProjectID(String projectName){
-      try {
-        projectIDString = projectApi.getProject(projectName).getId();
-        LOGGER.info("Project ID found");
-        return projectIDString;
-      } catch (ApiException e) {
-        e.printStackTrace();
-        throw new IllegalArgumentException("Unknown project");
-      }
-  }
-
-    public static Scenario createScenario(ScenarioRequest scenarioRequest) {
+  public static Scenario createScenario(ScenarioRequest scenarioRequest) {
     try {
-        Scenario scenario = scenarioApi.createScenario(projectIDString, scenarioRequest);
-      return scenario;
+      return scenarioApi.createScenario(projectId, scenarioRequest);
     } catch (ApiException e) {
-      LOGGER.error("Error Creating Scenario " + scenarioRequest.getName());
-      LOGGER.error(e.getResponseBody());
+      log.error("Error Creating Scenario " + scenarioRequest.getName());
+      log.error(e.getResponseBody());
       e.printStackTrace();
       return null;
     }
@@ -98,122 +86,106 @@ public final class TestraRestClient {
 
   public static Testcase createTestcase(TestcaseRequest testcaseRequest) {
     try {
-      Testcase testcase = testcaseApi.createTestcase(projectIDString, testcaseRequest);
-      return testcase;
+      return testcaseApi.createTestcase(projectId, testcaseRequest);
     } catch (ApiException e) {
-      LOGGER.error("Error Creating Test Case " + testcaseRequest.getName());
-      LOGGER.error(e.getResponseBody());
+      log.error("Error Creating Test Case " + testcaseRequest.getName());
+      log.error(e.getResponseBody());
       e.printStackTrace();
       return null;
     }
   }
 
-    private static synchronized String createExecution() {
-      if(executionIDString != null){
-        return executionIDString;
-      }
+  private static synchronized String createExecution() {
+    if (executionIDString != null) {
+      return executionIDString;
+    }
     ExecutionRequest executionRequest = new ExecutionRequest();
     executionRequest.setParallel(false);
-    if(PropertyHelper.prop("branch")!= null)
-      executionRequest.setBranch(PropertyHelper.prop("branch"));
-    if(PropertyHelper.prop("testra.environment")!=null)
-      executionRequest.setEnvironment(PropertyHelper.prop("testra.environment"));
-    if(executionDescription!= null){
-      executionRequest.setDescription(executionDescription);
-    }
-    if(buildRef!= null){
-      executionRequest.buildRef(buildRef);
-    }
-      executionRequest.setHost(HostNameUtil.hostName());
+    executionRequest.setHost(HostNameUtil.hostName());
     executionRequest.setTags(Collections.singletonList(""));
+    if (prop("branch") != null) executionRequest.setBranch(prop("branch"));
+    if (prop("env") != null) executionRequest.setEnvironment(prop("env"));
+    if (prop(execDesc) != null) executionRequest.setDescription(prop(execDesc));
+    if (prop(buildRef) != null) executionRequest.buildRef(prop(buildRef));
+
     try {
-        Execution execution = executionApi.createExecution(projectIDString, executionRequest);
-      executionIDString = execution.getId();
-      return executionIDString;
+      return executionApi.createExecution(projectId, executionRequest).getId();
     } catch (ApiException e) {
-      LOGGER.error("Error Creating Execution");
-      LOGGER.error(e.getResponseBody());
+      log.error("Error Creating Execution");
+      log.error(e.getResponseBody());
       e.printStackTrace();
       return null;
     }
   }
 
-    public static TestResult createResult(TestResultRequest testResultRequest) {
+  public static TestResult createResult(TestResultRequest testResultRequest) {
     try {
-        return resultApi.createResult(projectIDString, executionIDString, testResultRequest);
+      return resultApi.createResult(projectId, executionIDString, testResultRequest);
     } catch (ApiException e) {
-      LOGGER.error("Error Creating Result " + testResultRequest.getTargetId());
-      LOGGER.error(e.getResponseBody());
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException("Creating execution in Testra failed");
     }
   }
 
-  public static TestResult updateResult(String resultID, TestResultRequest testResultRequest){
+  public static TestResult updateResult(String resultID, TestResultRequest testResultRequest) {
     try {
-      return resultApi.updateResult(projectIDString,executionIDString,resultID,testResultRequest);
+      return resultApi.updateResult(projectId, executionIDString, resultID, testResultRequest);
     } catch (ApiException e) {
       e.printStackTrace();
       throw new IllegalArgumentException("Could not update result");
     }
   }
 
-  public static synchronized void setExecutionid(String eid){
-      if(eid == null){
-        createExecution();
-      }
-      else {
-        executionIDString = eid;
-      }
+  public static synchronized void setExecutionid(String eid) {
+    if (eid == null) {
+      createExecution();
+    } else {
+      executionIDString = eid;
+    }
   }
 
-  public static String getExecutionid(){
-      return executionIDString;
+  public static String getExecutionid() {
+    return executionIDString;
   }
 
-  public static List<EnrichedTestResult> getFailedResults(){
-      return getResults(StatusEnum.FAILED.toString());
+  public static List<EnrichedTestResult> getFailedResults() {
+    return getResults(StatusEnum.FAILED.toString());
   }
 
-  public static List<EnrichedTestResult> getResults(String resultType){
+  public static List<EnrichedTestResult> getResults(String resultType) {
     try {
-      return resultApi.getResults(projectIDString,executionIDString,resultType);
+      return resultApi.getResults(projectId, executionIDString, resultType);
     } catch (ApiException e) {
       e.printStackTrace();
       throw new IllegalArgumentException("No results found with execution ID " + executionIDString);
     }
   }
 
-  public static void createExecutionIDFile(){
+  public static void createExecutionIDFile() {
     File file = new File("testra.exec");
     try (FileWriter writer = new FileWriter(file)) {
-      if (file.createNewFile()){
-        System.out.println("File is created!");
-      }else{
-        System.out.println("File already exists.");
-      }
+      file.createNewFile();
       writer.write(TestraRestClient.getExecutionid());
     } catch (IOException e) {
-      LOGGER.error("Exception when creating execution id file.", e);
+      log.error("Exception when creating execution file.", e);
     }
   }
 
-  public static void createSimulation(SimulationRequest simulationRequest){
+  public static void createSimulation(SimulationRequest simulationRequest) {
     try {
-      simulationtApi.createSimulation(projectIDString, executionIDString, simulationRequest);
+      simulationtApi.createSimulation(projectId, executionIDString, simulationRequest);
     } catch (ApiException e) {
-      LOGGER.error("Error Creating Simulation");
-      LOGGER.error(e.getResponseBody());
+      log.error("Error Creating Simulation");
+      log.error(e.getResponseBody());
       e.printStackTrace();
     }
   }
 
-  public static void createSecurityScanResult(ScanResultRequest scanResultRequest){
+  public static void createSecurityScanResult(ScanResultRequest scanResultRequest) {
     try {
-      securityScanApi.createSecurityScanResult(projectIDString, executionIDString, scanResultRequest);
+      securityScanApi.createSecurityScanResult(projectId, executionIDString, scanResultRequest);
     } catch (ApiException e) {
-      LOGGER.error("Error Creating Security scan result");
-      LOGGER.error(e.getResponseBody());
+      log.error("Error Creating Security scan result");
+      log.error(e.getResponseBody());
       e.printStackTrace();
     }
   }
