@@ -91,7 +91,7 @@ compileJava.dependsOn compileSwaggerJava
 
 dependencies {
     // swaggerCompile "org.springframework.boot:spring-boot-starter-web:$spring_boot_version"
-    swaggerCompile 'io.swagger:swagger-annotations:1.5.16'
+    swaggerCompile 'io.swagger:swagger-annotations:1.5.21'
     swaggerCompile 'com.squareup.okhttp:okhttp:2.7.5'
     swaggerCompile 'com.squareup.okhttp:logging-interceptor:2.7.5'
     swaggerCompile 'com.google.code.gson:gson:2.8.5'
