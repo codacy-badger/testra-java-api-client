@@ -37,7 +37,7 @@ ext {
 }
 
 group 'tech.testra'
-version '0.18'
+version '0.26'
 
 sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 
@@ -112,6 +112,7 @@ dependencies {
     runtime "com.squareup.okhttp:okhttp:$okhttp_version"
     runtime "com.squareup.okhttp:logging-interceptor:$okhttp_version"
     runtime "com.google.code.gson:gson:$gson_version"
+    runtime "io.gsonfire:gson-fire:$gson_fire_version"
 
     compileOnly "org.projectlombok:lombok:$lombok_version"
     annotationProcessor "org.projectlombok:lombok:$lombok_version"
@@ -167,7 +168,7 @@ publishing {
                     }
                 }
                 scm {
-                    url = 'https://github.com/testra-tech/testra-java-api-client'
+                    url = 'https://github.com/testra/testra-java-api-client'
                 }
             }
         }
@@ -207,7 +208,7 @@ bintray {
         publicDownloadNumbers = true
         desc = 'Java api client for Testra'
         licenses = ['GPL-3.0']
-        vcsUrl = 'https://github.com/testra-tech/testra-java-api-client'
+        vcsUrl = 'https://github.com/testra/testra-java-api-client'
         version {
             name = "$project.version"
             desc = "$project.version"

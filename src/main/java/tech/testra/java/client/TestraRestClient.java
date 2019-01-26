@@ -66,7 +66,6 @@ public final class TestraRestClient {
   public static String getProjectID(String projectName) {
     try {
       projectId = projectApi.getProject(projectName).getId();
-      log.info("Project found in Testra. Its Id: " + projectId);
       return projectId;
     } catch (ApiException e) {
       throw new IllegalArgumentException("Project not found in Testra");
@@ -105,11 +104,12 @@ public final class TestraRestClient {
     executionRequest.setTags(Collections.singletonList(""));
     if (prop("branch") != null) executionRequest.setBranch(prop("branch"));
     if (prop("env") != null) executionRequest.setEnvironment(prop("env"));
-    if (prop(execDesc) != null) executionRequest.setDescription(prop(execDesc));
-    if (prop(buildRef) != null) executionRequest.buildRef(prop(buildRef));
+    if (prop("execDesc") != null) executionRequest.setDescription(prop("execDesc"));
+    if (prop("buildRef") != null) executionRequest.buildRef(prop("buildRef"));
 
     try {
-      return executionApi.createExecution(projectId, executionRequest).getId();
+      executionIDString = executionApi.createExecution(projectId, executionRequest).getId();
+      return executionIDString;
     } catch (ApiException e) {
       log.error("Error Creating Execution");
       log.error(e.getResponseBody());
