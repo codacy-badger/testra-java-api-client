@@ -146,7 +146,7 @@ publishing {
                 classifier "javadoc"
             }
             pom {
-                url = 'https://github.com/testra-tech/testra-java-api-client'
+                url = 'https://github.com/testra/testra-java-api-client'
                 licenses {
                     license {
                         name = 'GNU GENERAL PUBLIC LICENSE, Version 3.0'
@@ -200,7 +200,7 @@ bintray {
     dryRun = false
     publish = true
     pkg {
-        repo = 'testra'
+        repo = 'java-deps'
         name = "$project.name"
         publicDownloadNumbers = true
         desc = 'Java api client for Testra'
