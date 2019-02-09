@@ -3,8 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath('io.swagger:swagger-codegen:2.4.1')
-        classpath('org.projectlombok:lombok:1.18.4')
+        classpath('io.swagger.codegen.v3:swagger-codegen:3.0.4')
     }
 }
 
@@ -22,22 +21,8 @@ repositories {
     jcenter()
 }
 
-ext {
-    jackson_version = '2.4.2'
-    jersey_version = '1.18'
-    jodatime_version = '2.3'
-    junit_version = '4.12'
-    lombok_version = '1.18.4'
-    logback_version = '1.2.3'
-    slf4j_version = '1.7.25'
-    okhttp_version = '2.7.5'
-    gson_version = '2.8.5'
-    gson_fire_version = '1.8.3'
-    swagger_anno_version = '1.5.21'
-}
-
-group 'tech.testra'
-version '0.26'
+group 'io.github.testra'
+version '1.0-SNAPSHOT'
 
 sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 
@@ -54,14 +39,12 @@ task generateApi {
         config.setInputSpec(swaggerInput)
         config.setOutputDir(swaggerOutputDir.path)
         config.setLang('java')
+        config.setLibrary('retrofit2')
         config.setAdditionalProperties([
-                'invokerPackage': 'tech.testra.java.client',
-                'modelPackage'  : 'tech.testra.java.client.model',
-                'apiPackage'    : 'tech.testra.java.client.api',
+                'invokerPackage': 'io.github.testra.java.client',
+                'modelPackage'  : 'io.github.testra.java.client.model',
+                'apiPackage'    : 'io.github.testra.java.client.api',
                 'dateLibrary'   : 'java8'
-        ])
-        config.setImportMappings([
-                'Dog': 'tech.testra.jvm.client.model.Dog'
         ])
         new DefaultGenerator().opts(config.toClientOptInput()).generate()
     }
@@ -96,26 +79,40 @@ compileSwaggerJava.dependsOn generateApi
 classes.dependsOn swaggerClasses
 compileJava.dependsOn compileSwaggerJava
 
+ext {
+    okhttp_version = '3.12.1'
+    swagger_anno_version = '1.5.21'
+    retrofit_version = '2.5.0'
+    gson_version = '2.8.5'
+    gson_fire_version = '1.8.3'
+    apache_oltu_oauth2_version = '1.0.0'
+    javax_anno_version = '1.3.2'
+}
+
 dependencies {
     swaggerCompile "io.swagger:swagger-annotations:$swagger_anno_version"
-    swaggerCompile "com.squareup.okhttp:okhttp:$okhttp_version"
-    swaggerCompile "com.squareup.okhttp:logging-interceptor:$okhttp_version"
+    swaggerCompile "com.squareup.okhttp3:okhttp:$okhttp_version"
+    swaggerCompile "com.squareup.okhttp3:logging-interceptor:$okhttp_version"
+    swaggerCompile "com.squareup.retrofit2:retrofit:$retrofit_version"
+    swaggerCompile "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    swaggerCompile "com.squareup.retrofit2:converter-scalars:$retrofit_version"
+    swaggerCompile "org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:$apache_oltu_oauth2_version"
     swaggerCompile "com.google.code.gson:gson:$gson_version"
     swaggerCompile "io.gsonfire:gson-fire:$gson_fire_version"
+    swaggerCompile "javax.annotation:javax.annotation-api:$javax_anno_version"
 
     compile sourceSets.swagger.output
-    compile "org.slf4j:slf4j-api:$slf4j_version"
-    compile "ch.qos.logback:logback-classic:$logback_version"
-    compile "ch.qos.logback:logback-core:$logback_version"
-    testCompile "junit:junit:$junit_version"
+    compile "com.squareup.retrofit2:retrofit:$retrofit_version"
+    compile "com.squareup.okhttp3:logging-interceptor:$okhttp_version"
 
-    runtime "com.squareup.okhttp:okhttp:$okhttp_version"
-    runtime "com.squareup.okhttp:logging-interceptor:$okhttp_version"
+    runtime "com.squareup.okhttp3:okhttp:$okhttp_version"
+    runtime "com.squareup.okhttp3:logging-interceptor:$okhttp_version"
+    runtime "com.squareup.retrofit2:retrofit:$retrofit_version"
+    runtime "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    runtime "com.squareup.retrofit2:converter-scalars:$retrofit_version"
+    runtime "org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:$apache_oltu_oauth2_version"
     runtime "com.google.code.gson:gson:$gson_version"
     runtime "io.gsonfire:gson-fire:$gson_fire_version"
-
-    compileOnly "org.projectlombok:lombok:$lombok_version"
-    annotationProcessor "org.projectlombok:lombok:$lombok_version"
 }
 
 jar {
@@ -159,12 +156,12 @@ publishing {
                 }
                 developers {
                     developer {
-                        id = 'jhorsman'
-                        name = 'Jonathan Horsman'
-                    }
-                    developer {
                         id = 'sudokar'
                         name = 'sudokar'
+                    }
+                    developer {
+                        id = 'jhorsman'
+                        name = 'Jonathan Horsman'
                     }
                 }
                 scm {
