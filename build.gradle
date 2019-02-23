@@ -22,7 +22,7 @@ repositories {
 }
 
 group 'io.github.testra'
-version '1.0-SNAPSHOT'
+version '1.0-rc1'
 
 sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 
@@ -146,6 +146,8 @@ publishing {
                 classifier "javadoc"
             }
             pom {
+                name = "$project.name"
+                description = "Java api client for Testra"
                 url = 'https://github.com/testra/testra-java-api-client'
                 licenses {
                     license {
@@ -210,6 +212,15 @@ bintray {
             name = "$project.version"
             desc = "$project.version"
             released = new Date()
+            gpg {
+                sign = true
+                passphrase = System.getProperty('bintray.signing.password')
+            }
+            mavenCentralSync {
+                sync = true
+                user = System.getProperty('sonatype.userToken')
+                password = System.getProperty('sonatype.paasword')
+            }
         }
     }
 }

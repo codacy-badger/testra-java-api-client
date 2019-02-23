@@ -32,4 +32,4 @@ jobs:
     #     - "./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER"
     - stage: release
       script:
-        - "./gradlew bintrayUpload -x test bintrayPublish -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY"
+        - "./gradlew bintrayUpload -x test bintrayPublish -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbintray.signing.password=$BINTRAY_SIGN_PASSWORD -Dsonatype.userToken=$SONATYPE_USER_TOKEN -Dsonatype.paasword=$SONATYPE_PASSWORD"
